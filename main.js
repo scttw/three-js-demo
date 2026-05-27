@@ -17,9 +17,10 @@ camera.position.set(3, 2, 5);
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.5;
-controls.addEventListener('start', () => { controls.autoRotate = false; });
+
+let model = null;
+const SPIN_RADIANS_PER_SECOND = 0.1;
+const clock = new THREE.Clock();
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.05));
 const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
@@ -30,16 +31,20 @@ const loader = new GLTFLoader();
 loader.load(
   './models/moon.glb',
   (gltf) => {
-    const model = gltf.scene;
+    const loaded = gltf.scene;
     const lights = [];
-    model.traverse((obj) => { if (obj.isLight) lights.push(obj); });
+    loaded.traverse((obj) => { if (obj.isLight) lights.push(obj); });
     lights.forEach((l) => l.parent?.remove(l));
-    scene.add(model);
 
-    const box = new THREE.Box3().setFromObject(model);
+    const box = new THREE.Box3().setFromObject(loaded);
     const size = box.getSize(new THREE.Vector3()).length();
     const center = box.getCenter(new THREE.Vector3());
-    model.position.sub(center);
+    loaded.position.sub(center);
+
+    model = new THREE.Group();
+    model.add(loaded);
+    scene.add(model);
+
     camera.position.copy(new THREE.Vector3(0, 0, size * 1.5));
     controls.target.set(0, 0, 0);
     controls.update();
@@ -56,6 +61,8 @@ window.addEventListener('resize', () => {
 
 function animate() {
   requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  if (model) model.rotation.y += SPIN_RADIANS_PER_SECOND * dt;
   controls.update();
   renderer.render(scene, camera);
 }
