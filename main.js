@@ -41,6 +41,18 @@ loader.load(
     const center = box.getCenter(new THREE.Vector3());
     loaded.position.sub(center);
 
+    const bumpMap = new THREE.TextureLoader().load('./models/moon_bump.jpg', (tex) => {
+      tex.colorSpace = THREE.NoColorSpace;
+      tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    });
+    loaded.traverse((obj) => {
+      if (obj.isMesh && obj.material) {
+        obj.material.bumpMap = bumpMap;
+        obj.material.bumpScale = 5;
+        obj.material.needsUpdate = true;
+      }
+    });
+
     model = new THREE.Group();
     model.add(loaded);
     scene.add(model);
